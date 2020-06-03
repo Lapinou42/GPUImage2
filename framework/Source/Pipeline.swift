@@ -175,30 +175,36 @@ public class TargetContainer:Sequence {
                     return nil
                 }
                 
-                while (self.targets[index].value == nil) {
+                // NOTE: strong retain value, in case the value is released on another thread
+                var retainedValue = self.targets[index].value
+                while retainedValue == nil {
                     self.targets.remove(at:index)
                     if (index >= self.targets.count) {
                         return nil
                     }
+                    retainedValue = self.targets[index].value
                 }
                 
                 index += 1
-                return (self.targets[index - 1].value!, self.targets[index - 1].indexAtTarget)
+                return (retainedValue!, self.targets[index - 1].indexAtTarget)
 #else
             return self.dispatchQueue.sync{
                 if (index >= self.targets.count) {
                     return nil
                 }
                 
-                while (self.targets[index].value == nil) {
+                // NOTE: strong retain value, in case the value is released on another thread
+                var retainedValue = self.targets[index].value
+                while retainedValue == nil {
                     self.targets.remove(at:index)
                     if (index >= self.targets.count) {
                         return nil
                     }
+                    retainedValue = self.targets[index].value
                 }
                 
                 index += 1
-                return (self.targets[index - 1].value!, self.targets[index - 1].indexAtTarget)
+                return (retainedValue!, self.targets[index - 1].indexAtTarget)
            }
 #endif
         }
