@@ -23,6 +23,7 @@ public class FramebufferCache {
     }
     
     public func requestFramebufferWithProperties(orientation:ImageOrientation, size:GLSize, textureOnly:Bool = false, minFilter:Int32 = GL_LINEAR, magFilter:Int32 = GL_LINEAR, wrapS:Int32 = GL_CLAMP_TO_EDGE, wrapT:Int32 = GL_CLAMP_TO_EDGE, internalFormat:Int32 = GL_RGBA, format:Int32 = GL_BGRA, type:Int32 = GL_UNSIGNED_BYTE, stencil:Bool = false) -> Framebuffer {
+        __dispatch_assert_queue(context.serialDispatchQueue)
         let hash = hashForFramebufferWithProperties(orientation:orientation, size:size, textureOnly:textureOnly, minFilter:minFilter, magFilter:magFilter, wrapS:wrapS, wrapT:wrapT, internalFormat:internalFormat, format:format, type:type, stencil:stencil)
         let framebuffer:Framebuffer
         
@@ -47,8 +48,16 @@ public class FramebufferCache {
         return framebuffer
     }
     
-    public func purgeAllUnassignedFramebuffers() {
-        framebufferCache.removeAll()
+    public func purgeAllUnassignedFramebuffers(sync: Bool = false) {
+        if sync {
+            context.runOperationSynchronously {
+                self.framebufferCache.removeAll()
+            }
+        } else {
+            context.runOperationAsynchronously {
+                self.framebufferCache.removeAll()
+            }
+        }
     }
     
     func returnToCache(_ framebuffer:Framebuffer) {
