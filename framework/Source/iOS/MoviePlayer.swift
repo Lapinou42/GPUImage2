@@ -88,7 +88,7 @@ public class MoviePlayer: AVQueuePlayer, ImageSource {
     var nextSeeking: SeekingInfo?
     public var isSeeking = false
     public var enableVideoOutput = false
-    private var isProcessing = false
+    public private(set) var isProcessing = false
     private var needAddItemAfterDidEndNotify = false
     private lazy var pendingNewItems = [AVPlayerItem]()
     private var pendingSeekInfo: SeekingInfo?
@@ -537,13 +537,7 @@ private extension MoviePlayer {
     // MARK: -
     // MARK: Internal processing functions
     
-    func _process(videoOutput: AVPlayerItemVideoOutput, at playTime: CMTime) {
-        var timeForDisplay: CMTime = .zero
-        guard let pixelBuffer = videoOutput.copyPixelBuffer(forItemTime: playTime, itemTimeForDisplay: &timeForDisplay) else {
-            print("[MoviePlayer] Failed to copy pixel buffer at time:\(playTime)")
-            return
-        }
-        
+    func _process(_ pixelBuffer: CVPixelBuffer, at timeForDisplay: CMTime) {
         // Out of range when looping, skip process. So that it won't show unexpected frames.
         if loop && isPlaying && (timeForDisplay < actualStartTime || timeForDisplay >= actualEndTime) {
             print("[MoviePlayer] Skipped frame at time:\(timeForDisplay.seconds) is larger than range: [\(actualStartTime.seconds), \(actualEndTime.seconds)]")
@@ -588,11 +582,17 @@ private extension MoviePlayer {
         }
         guard !isProcessing, videoOutput.hasNewPixelBuffer(forItemTime: playTime) == true else { return }
         isProcessing = true
+        var timeForDisplay: CMTime = .zero
+        guard let pixelBuffer = videoOutput.copyPixelBuffer(forItemTime: playTime, itemTimeForDisplay: &timeForDisplay) else {
+            print("[MoviePlayer] Failed to copy pixel buffer at time:\(playTime)")
+            isProcessing = false
+            return
+        }
         sharedImageProcessingContext.runOperationAsynchronously { [weak self] in
             defer {
                 self?.isProcessing = false
             }
-            self?._process(videoOutput: videoOutput, at: playTime)
+            self?._process(pixelBuffer, at: playTime)
             self?._notifyTimeObserver(with: playTime)
         }
     }
