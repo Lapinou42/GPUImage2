@@ -427,12 +427,15 @@ public class MoviePlayer: AVQueuePlayer, ImageSource {
     }
     
     public func changePlayRate(to rate: Float) {
+        let ct = currentTime()
         playrate = rate
         items().forEach {
             if $0.audioTimePitchAlgorithm == .lowQualityZeroLatency {
                 $0.audioTimePitchAlgorithm = _audioPitchAlgorithm()
             }
         }
+        let toleranceTime = CMTime(seconds: 0.1, preferredTimescale: 600)
+        nextSeeking = SeekingInfo(time: ct, toleranceBefore: toleranceTime, toleranceAfter: toleranceTime, shouldPlayAfterSeeking: true)
         resume()
     }
 }
