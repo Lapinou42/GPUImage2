@@ -16,11 +16,11 @@ public class OpenGLContext: SerialDispatch {
 
     public let context:EAGLContext
     
-    lazy var passthroughShader:ShaderProgram = {
+    public lazy var passthroughShader:ShaderProgram = {
         return crashOnShaderCompileFailure("OpenGLContext"){return try self.programForVertexShader(OneInputVertexShader, fragmentShader:PassthroughFragmentShader)}
     }()
 
-    lazy var coreVideoTextureCache:CVOpenGLESTextureCache = {
+    public lazy var coreVideoTextureCache:CVOpenGLESTextureCache = {
         var newTextureCache:CVOpenGLESTextureCache? = nil
         let err = CVOpenGLESTextureCacheCreate(kCFAllocatorDefault, nil, self.context, nil, &newTextureCache)
         return newTextureCache!
@@ -80,7 +80,7 @@ public class OpenGLContext: SerialDispatch {
     // MARK: -
     // MARK: Device capabilities
     
-    func supportsTextureCaches() -> Bool {
+    public func supportsTextureCaches() -> Bool {
 #if targetEnvironment(simulator)
         return false // Simulator glitches out on use of texture caches
 #else
