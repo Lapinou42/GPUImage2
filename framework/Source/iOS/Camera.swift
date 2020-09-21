@@ -153,6 +153,11 @@ public class Camera: NSObject, ImageSource, AVCaptureVideoDataOutputSampleBuffer
             }
         }
         
+        captureSession.automaticallyConfiguresCaptureDeviceForWideColor = false
+        try self.inputCamera.lockForConfiguration()
+        self.inputCamera.activeColorSpace = .sRGB
+        self.inputCamera.unlockForConfiguration()
+        
         do {
             self.videoInput = try AVCaptureDeviceInput(device:inputCamera)
         } catch {
@@ -258,6 +263,9 @@ public class Camera: NSObject, ImageSource, AVCaptureVideoDataOutputSampleBuffer
             captureSession.removeInput(videoInput)
             if captureSession.canAddInput(newVideoInput) {
                 inputCamera = device
+                try device.lockForConfiguration()
+                device.activeColorSpace = .sRGB
+                device.unlockForConfiguration()
                 captureSession.addInput(newVideoInput)
                 videoInput = newVideoInput
                 self.location = location
